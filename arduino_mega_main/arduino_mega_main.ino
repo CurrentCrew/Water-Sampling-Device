@@ -3,25 +3,68 @@
 #define ROTARY_SERIAL Serial
 #include "rotary.h"
 
+#include <Wire.h>
+#include <RTClib.h>
+
 const int stepPerFullRev = 3200;
 
 const int secsBetweenSamples = 3;
 
+int sampleCounter = 1;
+
 const int fillTubeSteps = 200;
 const int flushSteps = 200;
 
+// hardware interrupt flags
 volatile bool waterFlowing = false;
+volatile bool alarm = false;
 
 int currentPosition;
 
+DateTime now;
+DateTime future;
+
 void takeSample() {
-
-  stepWheel(currentPosition, 1);
-
+  // Rotates to correct position from home
+  //  Replaces stepWheel(currentPosition, 1); because we will have purged at home before
+  for(int i = 0; i < sampleCounter; i++) {
+      stepWheel(stepPerFullRev/32, 1);
+      delay(500);
+  }
+  
   lockTube();
-  //insertNeedle();
-  //fillTube();
+  insertNeedle();
+  fillTube();
   release();
+}
+
+void lockTube() {
+  // Secure tube with horizontal LA
+  digitalWrite(wheelEnPin, HIGH);
+  // extends 
+  digitalWrite(lockingActuatorpin1, HIGH);
+  digitalWrite(lockingActuatorpin2, LOW);
+  delay(3000);
+}
+
+void insertNeedle() {
+  // with vertical LA
+  digitalWrite(needleActuatorpin1, LOW);
+  digitalWrite(needleActuatorpin2, HIGH);
+
+  delay(12000);
+
+}
+
+void fillTube() {
+  //digitalWrite(pumpEnPin, HIGH);
+  Serial.println("begin pump");
+  while (!waterFlowing) {
+    digitalWrite(pumpEnPin, HIGH);
+  }
+  Serial.println("end pump");
+  digitalWrite(pumpEnPin, LOW);
+  waterFlowing = false;
 }
 
 void release() {
@@ -56,33 +99,6 @@ void stepWheel(int n, int direction) {
     delayMicroseconds(500);
   }
   digitalWrite(wheelDirPin, LOW);
-}
-
-void lockTube() {
-  digitalWrite(wheelEnPin, HIGH);
-  
-  digitalWrite(lockingActuatorpin1, HIGH);
-  digitalWrite(lockingActuatorpin2, LOW);
-  delay(3000);
-}
-
-void insertNeedle() {
-  digitalWrite(needleActuatorpin1, LOW);
-  digitalWrite(needleActuatorpin2, HIGH);
-
-  delay(12000);
-
-}
-
-void fillTube() {
-  //digitalWrite(pumpEnPin, HIGH);
-  Serial.println("begin pump");
-  while (!waterFlowing) {
-    digitalWrite(pumpEnPin, HIGH);
-  }
-  Serial.println("end pump");
-  digitalWrite(pumpEnPin, LOW);
-  waterFlowing = false;
 }
 
 void setup() {

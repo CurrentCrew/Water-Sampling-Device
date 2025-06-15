@@ -20,13 +20,36 @@ class Rotary {
             pinMode(this->stp_pin, OUTPUT);
             pinMode(this->dir_pin, OUTPUT);
             pinMode(this->ena_pin, OUTPUT);
-            
+
             digitalWrite(this->ena_pin, LOW);
 
             #ifdef ROTARY_SERIAL
             ROTARY_SERIAL.println("Initalized Rotary");
             #endif
         }
+    
+    
+//handles conversion between sample number and step count
+void stepWheel(int n, int direction) {
+  //digitalWrite(wheelEnPin, HIGH);
+
+  digitalWrite(wheelEnPin, LOW); 
+  delayMicroseconds(100);
+  if (direction == 1) {
+    digitalWrite(wheelDirPin, HIGH);
+  } else {
+    digitalWrite(wheelDirPin, LOW);
+  }
+  
+  for (int x = 0; x < n; x++) {
+    digitalWrite(wheelStepPin, HIGH);
+    delayMicroseconds(2000);
+    digitalWrite(wheelStepPin, LOW);
+    delayMicroseconds(2000);
+  }
+  digitalWrite(wheelDirPin, LOW);
+}
+
 
 };
 
