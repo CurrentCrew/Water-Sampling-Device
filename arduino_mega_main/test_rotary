@@ -1,0 +1,63 @@
+const int wheelStepPin = 42;
+const int wheelDirPin = 41;
+const int wheelEnPin = 40;
+
+int step_position = 0;
+void lockWheel(const int ena_pin) {
+    digitalWrite(ena_pin, HIGH);
+}
+void unlockWheel(const int ena_pin) {
+    digitalWrite(ena_pin, LOW);
+}
+void dirCCW(const int dir_pin) {
+    digitalWrite(dir_pin, HIGH)
+}
+void dirCW(const int dir_pin) {
+    digitalWrite(dir_pin, LOW)
+}
+
+// 250 steps/sec
+void step(const int stp_pin) {
+    digitalWrite(stp_pin, HIGH);
+    delayMicroseconds(2000);
+    digitalWrite(stp_pin, LOW);
+    delayMicroseconds(2000);
+}
+
+// handles conversion between sample number and step count
+void stepWheel(int n, int direction) {
+  unlockWheel(wheelEnPin);
+  delayMicroseconds(100);
+
+  if (direction == 1) {
+    dirCCW(wheelDirPin);
+  } else {
+    dirCW(wheelDirPin);
+  }
+  
+  for (int x = 0; x < n; x++) {
+    step(wheelStepPin);
+  }
+
+  dirCW(wheelDirPin);
+}
+
+void setup() {
+    Serial.begin(9600);
+    pinMode(this->wheelStepPin, OUTPUT);
+    pinMode(this->wheelDirPin, OUTPUT);
+    pinMode(this->wheelEnPin, OUTPUT);
+    digitalWrite(this->wheelEnPin, LOW);
+    Serial.println("move stepper");
+    stepWheel(stepPerFullRev/32, 1);
+    // currentPosition = 0;
+    // sampleCounter = 1;
+    // currentPosition = stepPerFullRev/32;
+
+
+}
+
+void loop() {
+//   delay(1000);
+    
+}

@@ -144,7 +144,7 @@ void setup() {
 
   // Interrupts
   attachInterrupt(digitalPinToInterrupt(sensorPin), stopPump, RISING);
-  attachInterrupt(digitalPinToInterrupt(alarmPin), onAlarm, FALLING);
+  attachInterrupt(digitalPinToInterrupt(clockPin), onAlarm, FALLING);
 }
 
 void loop() {
@@ -163,7 +163,7 @@ void loop() {
       // } 
     
     //runs until 31 samples have been taken
-    if(sampleCounter < 32) {
+    if(sampleCounter < numTubes) {
       insertNeedle();
       purge();
       release();
@@ -171,7 +171,7 @@ void loop() {
 
       //PURGE RETURN: REPLACE THIS BLOCK WITH LIMIT SWITCH LOGIC
       for(int i = 0; i < sampleCounter; i++) {
-        stepWheel(stepPerFullRev/32, 0);
+        stepWheel(stepPerFullRev/numTubes, 0);
         delay(500);
       }
 
@@ -181,10 +181,17 @@ void loop() {
     }
 
     alarm = false;
-
+  }
 
 }
 
 void stopPump() {
   waterFlowing = true;
 }
+
+void onAlarm() {
+  // Clear the alarm flag to allow the next day’s event
+  alarm = true;
+  Serial.println("Daily alarm triggered!");
+}
+
