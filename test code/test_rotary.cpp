@@ -1,3 +1,6 @@
+/**
+ * Turns rotary to each vial 
+**/
 const int wheelStepPin = 42;
 const int wheelDirPin = 41;
 const int wheelEnPin = 40;
