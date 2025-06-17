@@ -3,6 +3,18 @@
 #define ROTARY_SERIAL Serial
 #include "rotary.h"
 
+#define ALARM_SERIAL Serial
+#include "alarm.h"
+
+#define ACTUATOR_SERIAL Serial
+#include "actuator.h"
+
+#define SENSOR_SERIAL Serial
+#include "sensor.h"
+
+#define PUMP_SERIAL Serial
+#include "pump.h"
+
 #include <Wire.h>
 #include <RTClib.h>
 
@@ -21,14 +33,22 @@ volatile bool alarm = false;
 
 int currentPosition;
 
-DateTime now;
-DateTime future;
+const int numTubes = 32;
+
+// Constructor initializations
+Rotary rotary(wheelStepPin, wheelDirPin, wheelEnPin);
+Actuator verticalActuator(needleActuatorpin1, needleActuatorpin2);
+Actuator horizontalActuator(lockingActuatorpin1, lockingActuatorpin2);
+Pump pump(pumpEnPin);
+Alarm alarm(clockPin);
+Sensor sensor(sensorPin);
+
 
 void takeSample() {
   // Rotates to correct position from home
   //  Replaces stepWheel(currentPosition, 1); because we will have purged at home before
   for(int i = 0; i < sampleCounter; i++) {
-      stepWheel(stepPerFullRev/32, 1);
+      stepWheel(stepPerFullRev/numTubes, 1);
       delay(500);
   }
   
@@ -38,32 +58,30 @@ void takeSample() {
   release();
 }
 
-void lockTube() {
-  // Secure tube with horizontal LA
-  digitalWrite(wheelEnPin, HIGH);
-  // extends 
-  digitalWrite(lockingActuatorpin1, HIGH);
-  digitalWrite(lockingActuatorpin2, LOW);
+//engages horizontal LA
+void lockTube(const int act_pin1, const int act_pin2) {
+  lockRotary();   
+
+  extendActuator(needleActuatorpin1, needleActuatorpin2);
   delay(3000);
 }
 
+//engages vertical LA
 void insertNeedle() {
-  // with vertical LA
-  digitalWrite(needleActuatorpin1, LOW);
-  digitalWrite(needleActuatorpin2, HIGH);
-
+  retractActuator(lockingActuatorpin1, lockingActuatorpin2);
   delay(12000);
-
 }
 
 void fillTube() {
   //digitalWrite(pumpEnPin, HIGH);
   Serial.println("begin pump");
   while (!waterFlowing) {
-    digitalWrite(pumpEnPin, HIGH);
+    startPump(pumpEnPin);
   }
+
   Serial.println("end pump");
-  digitalWrite(pumpEnPin, LOW);
+  stopPump(pumpEnPin);
+
   waterFlowing = false;
 }
 
@@ -71,73 +89,100 @@ void release() {
   digitalWrite(wheelEnPin, LOW);
   
   Serial.println("release 1");
-  digitalWrite(needleActuatorpin1, HIGH);
-  digitalWrite(needleActuatorpin2, LOW);
-
+  retractActuator(needleActuatorpin1, needleActuatorpin2);
   delay(10000);
 
   Serial.println("release 2");
-  digitalWrite(lockingActuatorpin1, LOW);
-  digitalWrite(lockingActuatorpin2, HIGH);
-
+  retractActuator(lockingActuatorpin1, lockingActuatorpin2);
   delay(3000);
+
   waterFlowing = false;
 }
 
+// handles conversion between sample number and step count
 void stepWheel(int n, int direction) {
-  
+  unlockWheel(wheelEnPin);
+  delayMicroseconds(100);
+
   if (direction == 1) {
-    digitalWrite(wheelDirPin, HIGH);
+    dirCCW(wheelDirPin);
   } else {
-    digitalWrite(wheelDirPin, LOW);
+    dirCW(wheelDirPin);
   }
   
   for (int x = 0; x < n; x++) {
-    digitalWrite(wheelStepPin, HIGH);
-    delayMicroseconds(500);
-    digitalWrite(wheelStepPin, LOW);
-    delayMicroseconds(500);
+    step(wheelStepPin);
   }
-  digitalWrite(wheelDirPin, LOW);
+
+  dirCW(wheelDirPin);
+}
+
+//Runs pump for set amount of time
+void purge() {
+  //digitalWrite(pumpEnPin, HIGH);
+  Serial.println("begin pump");
+  digitalWrite(pumpEnPin, HIGH);
+  delay(5000);
+  Serial.println("end pump");
+  digitalWrite(pumpEnPin, LOW);
+  waterFlowing = false;
 }
 
 void setup() {
   Serial.begin(9600);
-
-  //Set up water sensor
-  digitalWrite(sensorEnablePin, HIGH);
-
-  // Set up linearActuators
-  pinMode(needleActuatorpin1, OUTPUT);
-  pinMode(needleActuatorpin2, OUTPUT);
-  pinMode(lockingActuatorpin1,  OUTPUT);
-  pinMode(lockingActuatorpin2, OUTPUT);
-
-  // Set up wheel stepper motor
-  pinMode(wheelStepPin, OUTPUT);
-  pinMode(wheelDirPin, OUTPUT);
-  pinMode(wheelEnPin, OUTPUT);
-  digitalWrite(wheelEnPin, LOW);
-
-  // Set up pump
-  pinMode(pumpEnPin, OUTPUT);
-  digitalWrite(pumpEnPin, LOW);
+  
+  // Object initialization
+  rotary.init();
+  verticalActuator.init();
+  horizontalActuator.init();
+  pump.init();
+  alarm.init();
+  sensor.init();
 
   release();
-
-  Serial.println("move stepper");
-  stepWheel(stepPerFullRev/32, 1);
-  currentPosition = stepPerFullRev/32;
   lockTube();
 
-  attachInterrupt(digitalPinToInterrupt(sensorPin),stopPump,RISING);
-  // pinMode(sensorPin, INPUT);
-
+  // Interrupts
+  attachInterrupt(digitalPinToInterrupt(sensorPin), stopPump, RISING);
+  attachInterrupt(digitalPinToInterrupt(alarmPin), onAlarm, FALLING);
 }
 
 void loop() {
-  takeSample();
-  delay(secsBetweenSamples*1000);
+  // takeSample();
+  // delay(secsBetweenSamples*1000);
+
+  if(alarm) {
+    //turns off alarm
+    rtc.clearAlarm(1);
+    rtc.disableAlarm(1);
+
+      // //selects next alarm: see RTClib for other approaches
+      // future = rtc.now() + TimeSpan(120);
+      // if (!rtc.setAlarm1(future, DS3231_A1_Minute)) {
+      //   Serial.println("Failed to set Alarm1");
+      // } 
+    
+    //runs until 31 samples have been taken
+    if(sampleCounter < 32) {
+      insertNeedle();
+      purge();
+      release();
+      takeSample();
+
+      //PURGE RETURN: REPLACE THIS BLOCK WITH LIMIT SWITCH LOGIC
+      for(int i = 0; i < sampleCounter; i++) {
+        stepWheel(stepPerFullRev/32, 0);
+        delay(500);
+      }
+
+      //engage horizontal LA for overnight
+      lockTube();
+      sampleCounter ++;
+    }
+
+    alarm = false;
+
+
 }
 
 void stopPump() {

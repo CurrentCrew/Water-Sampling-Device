@@ -19,7 +19,7 @@ const int sensorEnablePin = 36;
 const int sensorPin = 3;
 
 //DS3231 Clock IC output
-const int alarmPin = 1;
+const int alarmPin = 18;
 
 //CHANGE THIS TO ADJUST HOW FAR THE STEPPER MOTOR ROTATES
 const int stepPerFullRev = 3200;
@@ -165,7 +165,6 @@ void setup() {
   rtc.writeSqwPinMode(DS3231_OFF);
   // Set up the interrupt pin (SQW → Arduino D18)
   pinMode(alarmPin, INPUT_PULLUP);
-  //pinMode(ALARM_INTERRUPT_PIN, INPUT);
   attachInterrupt(digitalPinToInterrupt(alarmPin), onAlarm, FALLING);
 
   // Set alarm 1 to trigger every day at midnight (00:00:00)
