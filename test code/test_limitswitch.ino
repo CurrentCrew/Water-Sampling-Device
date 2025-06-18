@@ -1,0 +1,72 @@
+/**
+ * Rotates CW to "purge," hits limit switch, then rotates CCW. 
+ * Mechanism goes over limit switch while rotating CCW. 
+ **/
+const int wheelStepPin = 42;
+const int wheelDirPin = 41;
+const int wheelEnPin = 40;
+const int stepPerFullRev = 3200;
+const int switchPin = 2;
+
+int step_position = 0;
+void lockWheel(const int ena_pin) {
+    digitalWrite(ena_pin, HIGH);
+}
+void unlockWheel(const int ena_pin) {
+    digitalWrite(ena_pin, LOW);
+}
+void dirCCW(const int dir_pin) {
+    digitalWrite(dir_pin, HIGH);
+}
+void dirCW(const int dir_pin) {
+    digitalWrite(dir_pin, LOW);
+}
+
+// 250 steps/sec
+void step(const int stp_pin) {
+    digitalWrite(stp_pin, HIGH);
+    pinMode(switchPin, INPUT_PULLUP);
+    delayMicroseconds(2000);
+    digitalWrite(stp_pin, LOW);
+    delayMicroseconds(2000);
+}
+
+// handles conversion between sample number and step count
+void stepWheel(int n, int direction) {
+    unlockWheel(wheelEnPin);
+    delayMicroseconds(100);
+
+    if (direction == 1) {
+    dirCCW(wheelDirPin);
+    } else {
+    dirCW(wheelDirPin);
+    }
+
+    for (int x = 0; x < n; x++) {
+    step(wheelStepPin);
+    }
+
+    dirCW(wheelDirPin);
+}
+
+void setup() {
+    Serial.begin(9600);
+    pinMode(wheelStepPin, OUTPUT);
+    pinMode(wheelDirPin, OUTPUT);
+    pinMode(wheelEnPin, OUTPUT);
+    digitalWrite(wheelEnPin, LOW);
+
+    delay(1000);
+}
+
+void loop() {
+    
+    digitalWrite(wheelDirPin, 0);
+    while(digitalRead(switchPin) != LOW) {
+        step(wheelStepPin);
+    }
+    digitalWrite(wheelDirPin, 1);
+    while(true) {
+        step(wheelStepPin);
+    }
+}
