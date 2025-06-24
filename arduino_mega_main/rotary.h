@@ -3,10 +3,10 @@
 
 class Rotary {
   public:
-    const int step_position;
-    const int stp_pin;
-    const int dir_pin;
-    const int ena_pin;
+    int step_position;
+    int stp_pin;
+    int dir_pin;
+    int ena_pin;
 
     // Constructors
     Rotary(const int stp_pin, const int dir_pin, const int ena_pin) {
@@ -28,24 +28,24 @@ class Rotary {
         #endif
     }
 
-    void lockWheel(const int ena_pin) {
-      digitalWrite(ena_pin, HIGH);
+    void lock() {
+      digitalWrite(this->ena_pin, LOW);
     }
-    void unlockWheel(const int ena_pin) {
-      digitalWrite(ena_pin, LOW);
+    void unlock() {
+      digitalWrite(this->ena_pin, HIGH);
     }
-    void dirCCW(const int dir_pin) {
-      digitalWrite(dir_pin, HIGH)
+    void dirCCW() {
+      digitalWrite(this->dir_pin, HIGH);
     }
-    void dirCW(const int dir_pin) {
-      digitalWrite(dir_pin, LOW)
+    void dirCW() {
+      digitalWrite(this->dir_pin, LOW);
     }
 
     // 250 steps/sec
-    void step(const int stp_pin) {
-      digitalWrite(stp_pin, HIGH);
+    void step() {
+      digitalWrite(this->stp_pin, HIGH);
       delayMicroseconds(2000);
-      digitalWrite(stp_pin, LOW);
+      digitalWrite(this->stp_pin, LOW);
       delayMicroseconds(2000);
     }
 

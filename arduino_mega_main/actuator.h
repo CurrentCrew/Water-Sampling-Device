@@ -3,13 +3,13 @@
 
 class Actuator {
     public:
-        const int act_pin1;
-        const int act_pin2;
+        int act_pin1;
+        int act_pin2;
 
         // Constructors
         Actuator(const int act_pin1, const int act_pin2) {
             this->act_pin1 = act_pin1;
-            this->act_pin2 = act_pin2
+            this->act_pin2 = act_pin2;
         }
         // Initialization
         void init() {
@@ -20,13 +20,13 @@ class Actuator {
             ACTUATOR_SERIAL.println("Initalized Actuator");
             #endif
         }
-        void extendActuator(const int act_pin1, const int act_pin2) {
-            digitalWrite(act_pin1, HIGH);
-            digitalWrite(act_pin2, LOW);
+        void extend() {
+            digitalWrite(this->act_pin1, HIGH);
+            digitalWrite(this->act_pin2, LOW);
         }
-        void retractActuator(const int act_pin1, const int act_pin2) {
-            digitalWrite(act_pin1, LOW);
-            digitalWrite(act_pin2, HIGH);
+        void retract() {
+            digitalWrite(this->act_pin1, LOW);
+            digitalWrite(this->act_pin2, HIGH);
         }
         
 };

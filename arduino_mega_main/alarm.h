@@ -9,16 +9,16 @@ class Alarm {
         RTC_DS3231 rtc;
         DateTime now;
         DateTime future;
-        const int alarmPin; // interrupt pin: DS3231 output
+        int alarmPin; // interrupt pin: DS3231 output
 
         // Constructors
         Alarm(const int alarmPin) {
-            this->alarmPin = alarmPin
+            this->alarmPin = alarmPin;
         }
         // Initialization: sets pin modes and enables rotary
         void init() {
             // Set up the interrupt pin (SQW → Arduino D18)
-            pinMode(alarmPin, INPUT_PULLUP);
+            pinMode(this->alarmPin, INPUT_PULLUP);
             
             //CLOCK SETUP CODE
             // Initialize the RTC
@@ -39,20 +39,34 @@ class Alarm {
             // Turn off the square‑wave generator so alarms drive SQW
             rtc.writeSqwPinMode(DS3231_OFF);
 
+            #define TEST_MODE
+            #ifdef TEST_MODE
+            DateTime alarmTime(0, 0, 0, 0, 0, 30);
+            rtc.setAlarm1(alarmTime, DS3231_A1_Second);
+            #else
+
             // Set alarm 1 to trigger every day at midnight (00:00:00)
             DateTime midnight = DateTime(now.year(), now.month(), now.day(), 0, 0, 0);
             // If it's past midnight now, set the alarm for the next day
             if (now >= midnight) {
-                midnight = midnight + TimeSpan(1, 0, 0, 0); // add 1 day
+                midnight = midnight + TimeSpan(0, 0, 0, 30); // add 1 day
             }
             // Set Alarm 1 to trigger when hour, minute, and second match (daily)
             rtc.setAlarm1(midnight, DS3231_A1_PerDay);
+
+            #endif
+
             rtc.clearAlarm(1);
 
             #ifdef ALARM_SERIAL
             ALARM_SERIAL.println("Initalized Alarm");
             #endif
         }
+      
+      void stop()
+      {
+        rtc.clearAlarm(1);
+      }
 };
 
 #endif

@@ -3,7 +3,7 @@
 
 class Switch { //Active 
     public:
-        const int no_pin;
+        int no_pin;
         int switchState;
 
         // Constructors
@@ -18,9 +18,8 @@ class Switch { //Active
             SWITCH_SERIAL.println("Initalized Switch");
             #endif
         }
-        bool isSwitchPressed(const int no_pin) {
-            switchState = digitalRead(no_pin) == LOW;
-            return switchState == LOW; // active LOw
+        bool isSwitchPressed() {
+            return digitalRead(no_pin) == LOW; // active LOw
         }
         
         

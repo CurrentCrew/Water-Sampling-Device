@@ -3,7 +3,7 @@
 
 class Pump {
     public:
-        const int ena_pin;
+        int ena_pin;
 
         // Constructors
         Pump(const int ena_pin) {
@@ -11,17 +11,17 @@ class Pump {
         }
         // Initialization
         void init() {
-            pinMode(pumpEnPin, OUTPUT);
-            digitalWrite(pumpEnPin, LOW);
+            pinMode(this->ena_pin, OUTPUT);
+            digitalWrite(this->ena_pin, LOW);
 
             #ifdef PUMP_SERIAL
             PUMP_SERIAL.println("Initalized Pump");
             #endif
         }
-        void startPump(const int ena_pin) {
+        void start() {
             digitalWrite(ena_pin, HIGH);
         }
-        void stopPump(const int ena_pin) {
+        void stop() {
             digitalWrite(ena_pin, LOW);
         }
 };
