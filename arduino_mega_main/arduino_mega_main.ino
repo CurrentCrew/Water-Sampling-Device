@@ -15,25 +15,27 @@
 #define PUMP_SERIAL Serial
 #include "pump.h"
 
+#define SWITCH_SERIAL
+#include "switch.h"
+
 #include <Wire.h>
 #include <RTClib.h>
 
 const int stepPerFullRev = 3200;
 
 const int secsBetweenSamples = 3;
-
-int sampleCounter = 1;
+const int numTubes = 32;
 
 const int fillTubeSteps = 200;
 const int flushSteps = 200;
 
-// hardware interrupt flags
-volatile bool waterFlowing = false;
-volatile bool alarm = false;
+int sampleCounter = 1;
 
 int currentPosition;
 
-const int numTubes = 32;
+// hardware interrupt flags
+volatile bool waterFlowing = false;
+volatile bool alarm = false;
 
 // Constructor initializations
 Rotary rotary(wheelStepPin, wheelDirPin, wheelEnPin);
@@ -42,6 +44,7 @@ Actuator horizontalActuator(lockingActuatorpin1, lockingActuatorpin2);
 Pump pump(pumpEnPin);
 Alarm alarm(clockPin);
 Sensor sensor(sensorPin);
+Switch microSwitch(switchPin);
 
 
 void takeSample() {
@@ -138,6 +141,7 @@ void setup() {
   pump.init();
   alarm.init();
   sensor.init();
+  microSwitch.init();
 
   release();
   lockTube();
@@ -165,15 +169,21 @@ void loop() {
     //runs until 31 samples have been taken
     if(sampleCounter < numTubes) {
       insertNeedle();
-      purge();
+      purge(); // goes through purge tube for water to go out through bottom
       release();
       takeSample();
 
       //PURGE RETURN: REPLACE THIS BLOCK WITH LIMIT SWITCH LOGIC
-      for(int i = 0; i < sampleCounter; i++) {
-        stepWheel(stepPerFullRev/numTubes, 0);
-        delay(500);
+      // for(int i = 0; i < sampleCounter; i++) {
+      //   stepWheel(stepPerFullRev/numTubes, 0);
+      //   delay(500);
+      // }
+      
+      while (isSwitchPressed(switchPin)) {
+        
+
       }
+
 
       //engage horizontal LA for overnight
       lockTube();

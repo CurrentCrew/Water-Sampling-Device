@@ -1,7 +1,12 @@
+/**
+ * Rotates CW to "purge," hits limit switch, then rotates CCW. 
+ * Mechanism goes over limit switch while rotating CCW. 
+ **/
 const int wheelStepPin = 42;
 const int wheelDirPin = 41;
 const int wheelEnPin = 40;
 const int stepPerFullRev = 3200;
+const int switchPin = 2;
 
 int step_position = 0;
 void lockWheel(const int ena_pin) {
@@ -20,6 +25,7 @@ void dirCW(const int dir_pin) {
 // 250 steps/sec
 void step(const int stp_pin) {
     digitalWrite(stp_pin, HIGH);
+    pinMode(switchPin, INPUT_PULLUP);
     delayMicroseconds(2000);
     digitalWrite(stp_pin, LOW);
     delayMicroseconds(2000);
@@ -49,10 +55,18 @@ void setup() {
     pinMode(wheelDirPin, OUTPUT);
     pinMode(wheelEnPin, OUTPUT);
     digitalWrite(wheelEnPin, LOW);
+
+    delay(1000);
 }
 
 void loop() {
-  delay(1000);
-  stepWheel(stepPerFullRev/32, 1);
-  Serial.println("move stepper");
+    
+    digitalWrite(wheelDirPin, 0);
+    while(digitalRead(switchPin) != LOW) {
+        step(wheelStepPin);
+    }
+    digitalWrite(wheelDirPin, 1);
+    while(true) {
+        step(wheelStepPin);
+    }
 }

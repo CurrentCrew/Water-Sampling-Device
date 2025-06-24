@@ -24,7 +24,7 @@ class Actuator {
             digitalWrite(act_pin1, HIGH);
             digitalWrite(act_pin2, LOW);
         }
-        void retractActuator() {
+        void retractActuator(const int act_pin1, const int act_pin2) {
             digitalWrite(act_pin1, LOW);
             digitalWrite(act_pin2, HIGH);
         }

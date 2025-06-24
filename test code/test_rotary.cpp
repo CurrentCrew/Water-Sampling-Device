@@ -1,12 +1,18 @@
 /**
  * Turns rotary to each vial 
 **/
+
+#include <AccelStepper.h>
+
 const int wheelStepPin = 42;
 const int wheelDirPin = 41;
 const int wheelEnPin = 40;
 const int stepPerFullRev = 3200;
 
 int step_position = 0;
+
+
+AccelStepper stepper(AccelStepper::DRIVER, wheelStepPin, wheelDirPin);
 void lockWheel(const int ena_pin) {
     digitalWrite(ena_pin, HIGH);
 }
@@ -52,10 +58,19 @@ void setup() {
     pinMode(wheelDirPin, OUTPUT);
     pinMode(wheelEnPin, OUTPUT);
     digitalWrite(wheelEnPin, LOW);
+    delay(10000);
+    // tests one full revolution
+    for(int i=0; i<32; i++) {
+      stepWheel(stepPerFullRev/32, 1);
+      Serial.print("move stepper:");
+      Serial.println(i);
+      delay(1000);
+    }
+    
 }
 
 void loop() {
-  delay(1000);
-  stepWheel(stepPerFullRev/32, 1);
-  Serial.println("move stepper");
+  // delay(1000);
+  // stepWheel(stepPerFullRev/32, 1);
+  // Serial.println("move stepper");
 }

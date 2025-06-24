@@ -17,4 +17,6 @@ const int sensorPin = 3;
 
 const int clockPin = 18;
 
+const int switchPin = 2;
+
 #endif
