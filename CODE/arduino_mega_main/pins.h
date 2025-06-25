@@ -12,7 +12,7 @@ const int wheelEnPin = 40;
 
 const int pumpEnPin = 30;
 
-// const int sensorEnablePin = 36;
+const int sensorEnablePin = 4;
 const int sensorPin = 3;
 
 const int clockPin = 18;

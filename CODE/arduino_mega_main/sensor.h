@@ -3,17 +3,17 @@
 
 class Sensor {
     public:
-        //int ena_pin; 
+        int ena_pin; 
         int out_pin;
 
         // Constructors
         Sensor(const int out_pin) {
-            //this->ena_pin = ena_pin;
+            this->ena_pin = ena_pin;
             this->out_pin = out_pin;
         }
         // Initialization
         void init() {
-            //digitalWrite(ena_pin, HIGH);
+            digitalWrite(ena_pin, HIGH);
             pinMode(out_pin, INPUT);
 
             #ifdef ALARM_SERIAL

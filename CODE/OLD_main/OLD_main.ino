@@ -16,18 +16,17 @@ const int pumpEnPin = 30;
 
 //water sensor
 const int sensorEnablePin = 36;
-const int sensorPin = 3;
+const int sensorPin = 2;
 
 //DS3231 Clock IC output
 const int alarmPin = 18;
 
 //CHANGE THIS TO ADJUST HOW FAR THE STEPPER MOTOR ROTATES
-const int stepPerFullRev = 3200;
-//const int stepPerFullRev = 6400;
+//const int stepPerFullRev = 3200;
+const int stepPerFullRev = 6400;
 //const int stepPerFullRev = 12800;
 
-//deprecated, use as fallback if timing IC doesn't work. multiply by 1000 if using delay() 
-//  since delay uses ms: delay(secsBetweenSamples * 1000);
+//deprecated, use as fallback if timing IC doesn't work. multiply by 1000 if using delay()
 const int secsBetweenSamples = 3;
 
 int sampleCounter = 1;
@@ -79,7 +78,7 @@ void release() {
   waterFlowing = false;
 }
 
-//handles conversion between sample number and step count
+//handles conversaion between sample number and step count
 void stepWheel(int n, int direction) {
   //digitalWrite(wheelEnPin, HIGH);
 
@@ -156,8 +155,8 @@ void setup() {
   }
   // Disable the 32 kHz output to free the SQW pin
   rtc.disable32K();
-  // Clear any existing alarms
-  //rtc.disableAlarm(1); 
+  // Clear any pending alarms
+  //rtc.disableAlarm(1);
   rtc.disableAlarm(2);
   rtc.clearAlarm(1);
   rtc.clearAlarm(2);
@@ -165,19 +164,10 @@ void setup() {
   rtc.writeSqwPinMode(DS3231_OFF);
   // Set up the interrupt pin (SQW → Arduino D18)
   pinMode(alarmPin, INPUT_PULLUP);
+  //pinMode(ALARM_INTERRUPT_PIN, INPUT);
   attachInterrupt(digitalPinToInterrupt(alarmPin), onAlarm, FALLING);
 
-  // Set alarm 1 to trigger every day at midnight (00:00:00)
-  DateTime midnight = DateTime(now.year(), now.month(), now.day(), 0, 0, 0);
-  // If it's past midnight now, set the alarm for the next day
-  if (now >= midnight) {
-    midnight = midnight + TimeSpan(1, 0, 0, 0); // add 1 day
-  }
-  // Set Alarm 1 to trigger when hour, minute, and second match (daily)
-  rtc.setAlarm1(midnight, DS3231_A1_PerDay);
-  // Enable Alarm 1 and clear any old alarm flags
-  rtc.armAlarm(1, true);
-  rtc.clearAlarm(1);
+
 
 
   //Set up water sensor
@@ -224,17 +214,18 @@ void loop() {
     rtc.clearAlarm(1);
     rtc.disableAlarm(1);
 
-      // //selects next alarm: see RTClib for other approaches
-      // future = rtc.now() + TimeSpan(120);
-      // if (!rtc.setAlarm1(future, DS3231_A1_Minute)) {
-      //   Serial.println("Failed to set Alarm1");
-      // } 
+    //selects next alarm: see RTClib for other approaches
+    future = rtc.now() + TimeSpan(120);
+    if (!rtc.setAlarm1(future, DS3231_A1_Minute)) {
+      Serial.println("Failed to set Alarm1");
+    } 
     
     //runs until 31 samples have been taken
     if(sampleCounter < 32) {
       insertNeedle();
       purge();
       release();
+
       takeSample();
 
       //PURGE RETURN: REPLACE THIS BLOCK WITH LIMIT SWITCH LOGIC
