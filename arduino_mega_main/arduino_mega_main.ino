@@ -53,7 +53,7 @@ void takeSample() {
   // Rotates to correct position from home
   //  Replaces stepWheel(currentPosition, 1); because we will have purged at home before
   for(int i = 0; i < sampleCounter; i++) {
-      stepWheel(stepPerFullRev/numTubes, 1);
+      stepWheel(int(20358/numTubes)*sampleCounter, 1);
       delay(500);
       lockTube();
       unlockTube();
@@ -103,7 +103,7 @@ void release() {
   rotary.lock();
   
   Serial.println("release 1");
-  verticalActuator.retract();
+  verticalActuator.extend();
   delay(10000);
 
   Serial.println("release 2");
@@ -180,16 +180,16 @@ void loop() {
     
     //runs until 31 samples have been taken
     if(sampleCounter < numTubes) {
-      insertNeedle();
-      
+      release();
       // move to home, then purge 
       rotary.dirCW();
       while (!microSwitch.isSwitchPressed()) {
         rotary.step();
       }
       rotary.dirCCW();
-      purge(); // goes through purge tube for water to go out through bottom
       
+      insertNeedle();
+      purge();
       release();
       takeSample();
 

@@ -49,7 +49,7 @@ class Alarm {
             DateTime midnight = DateTime(now.year(), now.month(), now.day(), 0, 0, 0);
             // If it's past midnight now, set the alarm for the next day
             if (now >= midnight) {
-                midnight = midnight + TimeSpan(0, 0, 0, 30); // add 1 day
+                midnight = midnight + TimeSpan(1, 0, 0, 0); // add 1 day
             }
             // Set Alarm 1 to trigger when hour, minute, and second match (daily)
             rtc.setAlarm1(midnight, DS3231_A1_PerDay);

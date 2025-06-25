@@ -19,7 +19,7 @@ class Switch { //Active
             #endif
         }
         bool isSwitchPressed() {
-            return digitalRead(no_pin) == LOW; // active LOw
+            return digitalRead(no_pin) == LOW; // active LOW
         }
         
         
