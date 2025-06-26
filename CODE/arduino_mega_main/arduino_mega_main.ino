@@ -21,7 +21,7 @@
 #include <Wire.h>
 #include <RTClib.h>
 
-const int stepPerFullRev = 3200;
+const int stepPerFullRev = 800;
 
 const int secsBetweenSamples = 3;
 const int numTubes = 32;
@@ -45,16 +45,17 @@ Actuator verticalActuator(needleActuatorpin1, needleActuatorpin2);
 Actuator horizontalActuator(lockingActuatorpin1, lockingActuatorpin2);
 Pump pump(pumpEnPin);
 Alarm alarm(clockPin);
-Sensor sensor(sensorPin);
+Sensor sensor(sensorEnablePin, sensorPin);
 Switch microSwitch(switchPin);
 
 
 void takeSample() {
   // Rotates to correct position from home
-  //  Replaces stepWheel(currentPosition, 1); because we will have purged at home before
   for(int i = 0; i < sampleCounter; i++) {
-      stepWheel(int(20358/numTubes)*sampleCounter, 1);
+      stepWheel(int(20358/numTubes), 1);
       delay(500);
+      // Error prevention: Lock at each sample to ensure accuracy of position 
+      //  because microstepper has inaccuracies with our high load weight
       lockTube();
       unlockTube();
   }
@@ -65,14 +66,13 @@ void takeSample() {
   release();
 }
 
-//engages horizontal LA
 void lockTube() {
-  rotary.unlock();   
+  rotary.off(); // so that LA can move tube into correct position
 
   horizontalActuator.extend();
   delay(3000);
 
-  rotary.lock();
+  rotary.on();
 }
 
 void unlockTube() {
@@ -80,32 +80,28 @@ void unlockTube() {
   delay(3000);
 }
 
-//engages vertical LA
 void insertNeedle() {
   verticalActuator.retract();
-  delay(12000);
+  delay(12000); // needle needs time to puncture tube, so have shortest length of LA be filling height 
 }
 
 void fillTube() {
   //digitalWrite(pumpEnPin, HIGH);
-  Serial.println("begin pump");
+  // interrupt from water sensor triggering --> waterFlowing = true
   while (!waterFlowing) {
     pump.start();
   }
-
-  Serial.println("end pump");
   pump.stop();
 
   waterFlowing = false;
 }
 
 void release() {
-  rotary.lock();
+  rotary.on();
   
   Serial.println("release 1");
   verticalActuator.extend();
   delay(10000);
-
   Serial.println("release 2");
   horizontalActuator.retract();
   delay(3000);
@@ -115,7 +111,7 @@ void release() {
 
 // handles conversion between sample number and step count
 void stepWheel(int n, int direction) {
-  rotary.lock();
+  rotary.on();
   delayMicroseconds(100);
 
   if (direction == 1) {
@@ -129,7 +125,7 @@ void stepWheel(int n, int direction) {
   }
 
   rotary.dirCW();
-  rotary.unlock();
+  rotary.off();
 }
 
 //Runs pump for set amount of time
@@ -156,11 +152,27 @@ void setup() {
   microSwitch.init();
 
   release();
-  lockTube();
+  Serial.println("release");
+  // // move to home
+  // rotary.dirCW();
+  // while (!microSwitch.isSwitchPressed()) {
+  //   rotary.step();
+  // }
+  //   rotary.dirCCW();
 
   // Interrupts
   attachInterrupt(digitalPinToInterrupt(sensorPin), stopPump, RISING);
   attachInterrupt(digitalPinToInterrupt(clockPin), onAlarm, FALLING);
+
+  // move to home, then purge 
+  rotary.dirCW();
+  rotary.on();
+  while (!microSwitch.isSwitchPressed()) {
+    rotary.step();
+  }
+  rotary.dirCCW();
+
+  lockTube();
 }
 
 void loop() {
@@ -168,10 +180,7 @@ void loop() {
   // delay(secsBetweenSamples*1000);
 
   if(alarm_setoff) {
-    
-    //turns off alarm
-    alarm.stop();
-
+      alarm.stop();
       // //selects next alarm: see RTClib for other approaches
       // future = rtc.now() + TimeSpan(120);
       // if (!rtc.setAlarm1(future, DS3231_A1_Minute)) {
@@ -180,25 +189,25 @@ void loop() {
     
     //runs until 31 samples have been taken
     if(sampleCounter < numTubes) {
-      release();
-      // move to home, then purge 
-      rotary.dirCW();
-      while (!microSwitch.isSwitchPressed()) {
-        rotary.step();
-      }
-      rotary.dirCCW();
-      
+      alarm_setoff = false;
+      lockTube();  
       insertNeedle();
       purge();
       release();
+
       takeSample();
 
-      //engage horizontal LA for overnight
+      //engage horizontal LA for overnight by moving to home
+      rotary.dirCW();
+      rotary.on();
+      while (!microSwitch.isSwitchPressed()) {
+        rotary.step();
+      }
+      rotary.dirCCW(); 
       lockTube();
+
       sampleCounter ++;
     }
-
-    alarm_setoff = false;
   }
 
 }
@@ -208,8 +217,8 @@ void stopPump() {
 }
 
 void onAlarm() {
-  // Clear the alarm flag to allow the next day’s event
   alarm_setoff = true;
+  // Clear the alarm flag to allow the next day’s event
   Serial.println("Daily alarm triggered!");
 }
 

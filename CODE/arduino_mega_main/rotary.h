@@ -28,10 +28,10 @@ class Rotary {
         #endif
     }
 
-    void lock() {
+    void on() {
       digitalWrite(this->ena_pin, LOW);
     }
-    void unlock() {
+    void off() {
       digitalWrite(this->ena_pin, HIGH);
     }
     void dirCCW() {

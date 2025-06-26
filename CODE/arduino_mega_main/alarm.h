@@ -41,7 +41,7 @@ class Alarm {
 
             #define TEST_MODE
             #ifdef TEST_MODE
-            DateTime alarmTime(0, 0, 0, 0, 0, 30);
+            DateTime alarmTime(0, 0, 0, 0, 0, 45);
             rtc.setAlarm1(alarmTime, DS3231_A1_Second);
             #else
 

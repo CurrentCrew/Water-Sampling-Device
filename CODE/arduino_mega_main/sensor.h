@@ -7,7 +7,7 @@ class Sensor {
         int out_pin;
 
         // Constructors
-        Sensor(const int out_pin) {
+        Sensor(const int ena_pin, const int out_pin) {
             this->ena_pin = ena_pin;
             this->out_pin = out_pin;
         }
