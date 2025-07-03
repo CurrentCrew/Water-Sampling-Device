@@ -44,9 +44,9 @@ class Rotary {
     // 250 steps/sec
     void step() {
       digitalWrite(this->stp_pin, HIGH);
-      delayMicroseconds(2000);
+      delayMicroseconds(1000);
       digitalWrite(this->stp_pin, LOW);
-      delayMicroseconds(2000);
+      delayMicroseconds(1000);
     }
 
 };

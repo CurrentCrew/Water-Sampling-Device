@@ -29,7 +29,7 @@ const int numTubes = 32;
 const int fillTubeSteps = 200;
 const int flushSteps = 200;
 
-const int purgeTime = 5000;
+const int purgeTime = 8000;
 
 int sampleCounter = 1;
 
@@ -63,6 +63,7 @@ void takeSample() {
   lockTube();
   insertNeedle();
   fillTube();
+  delay(5000);
   release();
 }
 
