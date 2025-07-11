@@ -19,4 +19,8 @@ const int clockPin = 18;
 
 const int switchPin = 2;
 
+const int UP_BUTTON_PIN = 67;
+const int DOWN_BUTTON_PIN = 68;
+const int SELECT_BUTTON_PIN = 69;
+
 #endif

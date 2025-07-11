@@ -16,9 +16,11 @@ int sampleCounter = 1;
 int currentPosition;
 
 // hardware interrupt flags
-volatile bool alarm_setoff = false;
+volatile bool alarm_setoff = true;
 volatile bool up_pressed = false;
 volatile bool down_pressed = false;
 volatile bool select_pressed = false;
+
+int state = IDLE_STATE;
 
 #endif

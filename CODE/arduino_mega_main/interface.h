@@ -61,35 +61,58 @@ class UIElement {
     {
       for (int i = 0; i < thickness; i++)
         display.drawRect(this->pos.x+i, this->pos.y+i, this->size.x-i*2, this->size.y-i*2, SSD1306_WHITE);
-      
-
-        
     }
 };
 
-class UIButton : public UIElement {
+class UIText : public UIElement {
   public:
     __FlashStringHelper * text;
     int char_count;
     int text_scale;
-    void (*onPressFunction)();
-    bool on_press_sent;
-
-    UIButton(int index, struct Vector2 s, struct Vector2 p) : UIElement(index, s, p, true){
-
-    }
-
-    void setOnPress(void (*onPressFunction)())
-    {
-      this->onPressFunction = onPressFunction;
-      this->on_press_sent = true;
-    }
 
     void setText(__FlashStringHelper * text, int char_count, int text_scale)
     {
       this->text = text;
       this->char_count = char_count;
       this->text_scale = text_scale;
+    }
+
+    UIText(int index, struct Vector2 s, struct Vector2 p) : UIElement(index, s, p, false)
+    {
+
+    }
+
+    void render(Adafruit_SSD1306 display) override
+    {
+      UIElement::render(display);
+
+      Vector2 center = this->getCenter();
+      display.setTextSize(this->text_scale);             // Normal 1:1 pixel scale
+      display.setTextColor(SSD1306_WHITE);        // Draw white text
+      display.setCursor(
+        center.x - this->char_count  / 2 * CHAR_WIDTH * text_scale,
+        center.y - CHAR_HEIGHT * text_scale / 2);             // Start at top-left corner
+      display.println(this->text);
+    }
+};
+
+void emptyFunction() {}
+
+class UIButton : public UIText {
+  public:
+    void (*onPressFunction)();
+    bool on_press_sent;
+
+    UIButton(int index, struct Vector2 s, struct Vector2 p) : UIText(index, s, p)
+    {
+      this->selectable = true;
+      this->onPressFunction = &emptyFunction;
+    }
+
+    void setOnPress(void (*onPressFunction)())
+    {
+      this->onPressFunction = onPressFunction;
+      this->on_press_sent = true;
     }
 
     void onPress() override
@@ -100,13 +123,8 @@ class UIButton : public UIElement {
 
     void render(Adafruit_SSD1306 display) override
     {
-      Vector2 center = this->getCenter();
-      display.setTextSize(1);             // Normal 1:1 pixel scale
-      display.setTextColor(SSD1306_WHITE);        // Draw white text
-      display.setCursor(
-        center.x - this->char_count  / 2 * CHAR_WIDTH * text_scale,
-        center.y - CHAR_HEIGHT * text_scale / 2);             // Start at top-left corner
-      display.println(this->text);
+
+      UIText::render(display);
 
       if (this->selected)
         drawOutline(display, 3);
@@ -120,7 +138,7 @@ class UIScreen {
   public:
     int element_count;
     UIElement *elements[MAX_ELEMENT_COUNT];
-    int selected_element;
+    int selected_element = -1;
     void render(Adafruit_SSD1306 display)
     {
       display.clearDisplay();
@@ -137,12 +155,22 @@ class UIScreen {
 
     void addElement(UIElement *element)
     {
+      if (selected_element == -1 && element->selectable)
+      {
+        element->selected = true;
+        this->selected_element = this->element_count;
+      }
+
       this->elements[this->element_count] = element;
       this->element_count++;
+
+
     }
 
     void move(int dir)
     {
+      if (this->element_count == 0)
+        return;
       int selected_element_index = this->elements[this->selected_element]->index;
 
       int element_index = -1;
@@ -170,8 +198,8 @@ class UIScreen {
         element_index = i;
       }
 
-      Serial.print("Selected: ");
-      Serial.println(element_index);
+      // Serial.print("Selected: ");
+      // Serial.println(element_index);
 
       if (element_index == -1)
         return;
@@ -183,10 +211,21 @@ class UIScreen {
 
     void select()
     {
+      if (this->selected_element == -1)
+        return;
+
       this->elements[this->selected_element]->onPress();
     }
     
 };
+
+UIScreen *current_screen;
+
+void switchScreen(UIScreen *new_screen)
+{
+  current_screen = new_screen;
+  new_screen->render(main_display);
+}
 
 void initializeInterface()
 {
