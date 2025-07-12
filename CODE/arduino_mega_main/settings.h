@@ -21,6 +21,4 @@ volatile bool up_pressed = false;
 volatile bool down_pressed = false;
 volatile bool select_pressed = false;
 
-int state = IDLE_STATE;
-
 #endif

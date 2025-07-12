@@ -66,11 +66,11 @@ class UIElement {
 
 class UIText : public UIElement {
   public:
-    __FlashStringHelper * text;
+    char * text;
     int char_count;
     int text_scale;
 
-    void setText(__FlashStringHelper * text, int char_count, int text_scale)
+    void setText(char * text, int char_count, int text_scale)
     {
       this->text = text;
       this->char_count = char_count;
@@ -146,6 +146,15 @@ class UIScreen {
       {
         this->elements[i]->render(display);
       }
+
+      // Base Elements
+
+      // State
+      display.setTextSize(1);             // Normal 1:1 pixel scale
+      display.setTextColor(SSD1306_WHITE);        // Draw white text
+      display.setCursor(3,3);             // Start at top-left corner
+      display.println(state);
+
       display.display();
     }
 

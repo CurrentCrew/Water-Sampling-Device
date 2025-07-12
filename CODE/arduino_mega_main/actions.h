@@ -108,7 +108,7 @@ void onAlarm() {
   Serial.println("Daily alarm triggered!");
 }
 
-#define BUTTON_DEBOUNCE 500
+#define BUTTON_DEBOUNCE 300
 
 unsigned long lastUpButtonPress = 0;
 unsigned long lastDownButtonPress = 0;
@@ -118,36 +118,36 @@ void onUpButton()
 {
   Serial.println("Up button pressed");
   up_pressed = false;
-  if (millis() > lastUpButtonPress + BUTTON_DEBOUNCE)
+  if (time_since(millis(), lastUpButtonPress) > BUTTON_DEBOUNCE)
   {
     current_screen->move(-1);
     current_screen->render(main_display);
+    lastUpButtonPress = millis();
   }
-  lastUpButtonPress = millis();
 }
 
 void onDownButton()
 {
   Serial.println("Down button pressed");
   down_pressed = false;
-  if (millis() > lastDownButtonPress + BUTTON_DEBOUNCE)
+  if (time_since(millis(), lastDownButtonPress) > BUTTON_DEBOUNCE)
   {
     current_screen->move(1);
     current_screen->render(main_display);
+    lastDownButtonPress = millis();
   }
-  lastDownButtonPress = millis();
 }
 
 void onSelectButton()
 {
   Serial.println("Select button pressed");
   select_pressed = false;
-  if (millis() > lastSelectButtonPress + BUTTON_DEBOUNCE)
+  if (time_since(millis(), lastSelectButtonPress) > BUTTON_DEBOUNCE)
   {
     current_screen->select();
     current_screen->render(main_display);
+    lastSelectButtonPress = millis();
   }
-  lastSelectButtonPress = millis();
 }
 
 void attachInterrupts()
