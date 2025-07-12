@@ -66,7 +66,7 @@ struct WaitState release_needle_state {
   10 * SECONDS,
   []() {
     setWaitingText("Releasing Needle", 16);
-    verticalActuator.extend();
+    horizontalActuator.extend();
   }
 };
 
