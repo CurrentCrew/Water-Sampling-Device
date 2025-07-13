@@ -1,8 +1,8 @@
 #ifndef PINS_H
 #define PINS_H
 
-const int needleActuatorpin1 = 26;
-const int needleActuatorpin2 = 27;
+const int needleActuatorpin1 = 27;
+const int needleActuatorpin2 = 26;
 const int lockingActuatorpin1 = 24;
 const int lockingActuatorpin2 = 25;
 
@@ -22,5 +22,7 @@ const int switchPin = 2;
 const int UP_BUTTON_PIN = 67;
 const int DOWN_BUTTON_PIN = 68;
 const int SELECT_BUTTON_PIN = 69;
+
+const int SERVO_PIN = 5;
 
 #endif

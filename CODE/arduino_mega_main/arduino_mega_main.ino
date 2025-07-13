@@ -12,6 +12,7 @@
 #include "actions.h"
 #include "devices.h"
 
+struct Vector2 med_button_half_size = {64, 16};
 struct Vector2 med_button_size = {128, 16};
 struct Vector2 big_button_size = {128, 32};
 
@@ -22,15 +23,16 @@ UIScreen home_screen;
 
 struct Vector2 prime_pump_button_pos = {0, 0};
 UIButton prime_pump_button(1, {0, 0}, med_button_size);
-
-struct Vector2 start_button_pos = {0, 16};
-UIButton start_button(2, start_button_pos, med_button_size);
-
-struct Vector2 release_button_pos = {0, 32};
-UIButton release_button(3, release_button_pos, med_button_size);
+UIButton start_button(2, {0, 16}, med_button_size);
+UIButton manual_button(3, {0, 32}, med_button_size);
 
 // Manual Control Screen
 UIScreen manual_control_screen;
+UIButton inject_needle_button(1, {0, 0}, med_button_half_size);
+UIButton release_needle_button(2, {64, 0}, med_button_half_size);
+UIButton extend_lock_button(3, {0, 16}, med_button_half_size);
+UIButton release_lock_button(4, {64, 16}, med_button_half_size);
+UIButton manual_control_screen_back(5, {0, 36}, med_button_size);
 
 // Prime Screen
 UIScreen prime_screen;
@@ -66,7 +68,7 @@ struct WaitState release_needle_state {
   10 * SECONDS,
   []() {
     setWaitingText("Releasing Needle", 16);
-    horizontalActuator.extend();
+    verticalActuator.extend();
   }
 };
 
@@ -74,7 +76,7 @@ struct WaitState release_lock_state {
   4 * SECONDS,
   []() {
     setWaitingText("Releasing Lock", 14);
-    verticalActuator.extend();
+    horizontalActuator.retract();
   }
 };
 
@@ -170,52 +172,12 @@ UIScreen *state_screens[] = {
   &waiting_screen,   // MAIN_LOOP_IDLE
   &waiting_screen,   // STEP_WHEEL_STATE
   &waiting_screen,   // FILL_TILL_WATER
+  &manual_control_screen    // MANUAL_CONTROL
 };
 
-void start()
+void setManualState()
 {
-  release();
-
-  goToLimitSwitch();
-
-  rotary.dirCCW();
-
-  lockTube();
-
-  while (true)
-  {
-    delay(1000);
-    if(alarm_setoff) {
-      alarm.stop();
-      // //selects next alarm: see RTClib for other approaches
-      // future = rtc.now() + TimeSpan(120);
-      // if (!rtc.setAlarm1(future, DS3231_A1_Minute)) {
-      //   Serial.println("Failed to set Alarm1");
-      // } 
-    
-      //runs until 31 samples have been taken
-      if(sampleCounter < numTubes) {
-        alarm_setoff = false;
-        lockTube();  
-        insertNeedle();
-        purge();
-        release();
-
-        takeSample();
-
-        //engage horizontal LA for overnight by moving to home
-        rotary.dirCW();
-        rotary.on();
-        while (!microSwitch.isSwitchPressed()) {
-          rotary.step();
-        }
-        rotary.dirCCW(); 
-        lockTube();
-
-        sampleCounter ++;
-      }
-    }
-  }
+  state = MANUAL_CONTROL;
 }
 
 void init_ui()
@@ -223,18 +185,14 @@ void init_ui()
   // Home screen
   prime_pump_button.setText("Prime Pump", 10, 1);
   start_button.setText("Start", 5, 1);
-  release_button.setText("Release", 7, 1);
+  manual_button.setText("Manual Control", 14, 1);
 
   prime_pump_button.setOnPress([]() {
     state = PRIMING_STATE;
     pump.start();
   });
 
-  release_button.setOnPress([]() {
-    setWaitStack(&release_stack, []() {
-      state = IDLE_STATE;
-    });
-  });
+  manual_button.setOnPress(setManualState);
 
   start_button.setOnPress([]() {
     setWaitStack(&release_stack, []() {
@@ -247,7 +205,41 @@ void init_ui()
 
   home_screen.addElement(&prime_pump_button);
   home_screen.addElement(&start_button);
-  home_screen.addElement(&release_button);
+  home_screen.addElement(&manual_button);
+
+  // Manual Controls Screen
+
+  inject_needle_button.setText("Inject", 6, 1);
+  release_needle_button.setText("Release", 7, 1);
+  extend_lock_button.setText("Lock", 4, 1);
+  release_lock_button.setText("Unlock", 6, 1);
+  manual_control_screen_back.setText("Back", 4, 1);
+
+  inject_needle_button.setOnPress([]() {
+    setWaitState(&insert_needle_state, setManualState);
+  });
+
+  release_needle_button.setOnPress([]() {
+    setWaitState(&release_needle_state, setManualState);
+  });
+
+  extend_lock_button.setOnPress([]() {
+    setWaitState(&extend_lock_state, setManualState);
+  });
+
+  release_lock_button.setOnPress([]() {
+    setWaitState(&release_lock_state, setManualState);
+  });
+
+  manual_control_screen_back.setOnPress([]() {
+    state = IDLE_STATE;
+  });
+
+  manual_control_screen.addElement(&inject_needle_button);
+  manual_control_screen.addElement(&release_needle_button);
+  manual_control_screen.addElement(&extend_lock_button);
+  manual_control_screen.addElement(&release_lock_button);
+  manual_control_screen.addElement(&manual_control_screen_back);
 
   // Prime Screen
   prime_release_button.setText("Stop Prime", 10, 1);
@@ -259,7 +251,7 @@ void init_ui()
 
   prime_screen.addElement(&prime_release_button);
 
-  // Releasing Screen
+  // Waiting Screen
   waiting_screen.addElement(&waiting_text);
 }
 
@@ -276,6 +268,10 @@ void setup() {
   current_screen = &home_screen;
 
   updateDisplay();
+
+  // adjustmentServo.write(100); 
+  // delay(1000);
+  // adjustmentServo.write(58); 
 }
 
 void loop() {
@@ -329,7 +325,9 @@ void loop() {
         setWaitStack(&main_loop_stack, []() {
           setStepWheel(int(20358/numTubes) * sampleCounter, []() {
             sampleCounter += 5;
+            adjustmentServo.write(SERVO_PUSH); 
             setWaitStack(&pre_inject_stack, []() {
+              adjustmentServo.write(SERVO_IDLE); 
               state = FILL_TILL_WATER;
               pump.start();
               setWaitingText("Filling", 7);
@@ -354,11 +352,16 @@ void loop() {
         setWaitStack(&release_stack, []() {
           goToLimit([]() {
             setWaitState(&extend_lock_state, []() {
-              state = MAIN_LOOP_IDLE;
+              if (sampleCounter >= numTubes)
+                state = IDLE_STATE;
+              else
+                state = MAIN_LOOP_IDLE;
             });
           });
         });
       }
+      break;
+    case MANUAL_CONTROL:
       break;
   }
   

@@ -9,6 +9,7 @@
 #define MAIN_LOOP_IDLE 5
 #define STEP_WHEEL_STATE 6
 #define FILL_TILL_WATER 7
+#define MANUAL_CONTROL 8
 
 struct WaitState {
   int lifetime;
