@@ -30,8 +30,8 @@ UIButton manual_button(3, {0, 32}, med_button_size);
 UIScreen manual_control_screen;
 UIButton inject_needle_button(1, {0, 0}, med_button_half_size);
 UIButton release_needle_button(2, {64, 0}, med_button_half_size);
-UIButton extend_lock_button(3, {0, 16}, med_button_half_size);
-UIButton release_lock_button(4, {64, 16}, med_button_half_size);
+UIButton extend_adjustment_button(3, {0, 16}, med_button_half_size);
+UIButton release_adjustment_button(4, {64, 16}, med_button_half_size);
 UIButton manual_control_screen_back(5, {0, 36}, med_button_size);
 
 // Prime Screen
@@ -72,13 +72,13 @@ struct WaitState release_needle_state {
   }
 };
 
-struct WaitState release_lock_state {
-  4 * SECONDS,
-  []() {
-    setWaitingText("Releasing Lock", 14);
-    horizontalActuator.retract();
-  }
-};
+// struct WaitState release_lock_state {
+//   4 * SECONDS,
+//   []() {
+//     setWaitingText("Releasing Lock", 14);
+//     horizontalActuator.retract();
+//   }
+// };
 
 struct WaitState insert_needle_state {
   10 * SECONDS,
@@ -88,13 +88,13 @@ struct WaitState insert_needle_state {
   }
 };
 
-struct WaitState extend_lock_state {
-  4 * SECONDS,
-  []() {
-    setWaitingText("Extending Lock", 16);
-    horizontalActuator.extend();
-  }
-};
+// struct WaitState extend_lock_state {
+//   4 * SECONDS,
+//   []() {
+//     setWaitingText("Extending Lock", 16);
+//     horizontalActuator.extend();
+//   }
+// };
 
 struct WaitState purge_state {
   4 * SECONDS,
@@ -113,8 +113,7 @@ struct WaitState pump_off {
 
 // Release Stack
 struct WaitState release_stack_objs[] = {
-  release_needle_state,
-  release_lock_state
+  release_needle_state
 };
 
 WaitStack release_stack = {
@@ -124,7 +123,7 @@ WaitStack release_stack = {
 
 // Main Loop Start STack
 struct WaitState main_loop_start_stack_objs[] = {
-  insert_needle_state, purge_state, pump_off, release_needle_state, release_lock_state
+  insert_needle_state, purge_state, pump_off, release_needle_state
 };
 
 WaitStack main_loop_stack = {
@@ -134,7 +133,7 @@ WaitStack main_loop_stack = {
 
 // pre_inject_stack
 struct WaitState pre_inject_stack_objs[] = {
-  extend_lock_state, insert_needle_state
+  insert_needle_state
 };
 
 WaitStack pre_inject_stack = {
@@ -196,9 +195,7 @@ void init_ui()
 
   start_button.setOnPress([]() {
     setWaitStack(&release_stack, []() {
-      goToLimit([]() {
-        setWaitState(&extend_lock_state, &setMainLoopIdle);
-      });
+      goToLimit(setMainLoopIdle);
     });
   });
 
@@ -211,8 +208,8 @@ void init_ui()
 
   inject_needle_button.setText("Inject", 6, 1);
   release_needle_button.setText("Release", 7, 1);
-  extend_lock_button.setText("Lock", 4, 1);
-  release_lock_button.setText("Unlock", 6, 1);
+  extend_adjustment_button.setText("Adjust", 6, 1);
+  release_adjustment_button.setText("Unadjust", 8, 1);
   manual_control_screen_back.setText("Back", 4, 1);
 
   inject_needle_button.setOnPress([]() {
@@ -223,12 +220,12 @@ void init_ui()
     setWaitState(&release_needle_state, setManualState);
   });
 
-  extend_lock_button.setOnPress([]() {
-    setWaitState(&extend_lock_state, setManualState);
+  extend_adjustment_button.setOnPress([]() {
+    adjustmentServo.write(SERVO_PUSH); 
   });
 
-  release_lock_button.setOnPress([]() {
-    setWaitState(&release_lock_state, setManualState);
+  release_adjustment_button.setOnPress([]() {
+    adjustmentServo.write(SERVO_IDLE); 
   });
 
   manual_control_screen_back.setOnPress([]() {
@@ -237,8 +234,8 @@ void init_ui()
 
   manual_control_screen.addElement(&inject_needle_button);
   manual_control_screen.addElement(&release_needle_button);
-  manual_control_screen.addElement(&extend_lock_button);
-  manual_control_screen.addElement(&release_lock_button);
+  manual_control_screen.addElement(&extend_adjustment_button);
+  manual_control_screen.addElement(&release_adjustment_button);
   manual_control_screen.addElement(&manual_control_screen_back);
 
   // Prime Screen
@@ -351,12 +348,10 @@ void loop() {
         pump.stop();
         setWaitStack(&release_stack, []() {
           goToLimit([]() {
-            setWaitState(&extend_lock_state, []() {
-              if (sampleCounter >= numTubes)
-                state = IDLE_STATE;
-              else
-                state = MAIN_LOOP_IDLE;
-            });
+            if (sampleCounter >= numTubes)
+              state = IDLE_STATE;
+            else
+              state = MAIN_LOOP_IDLE;
           });
         });
       }
