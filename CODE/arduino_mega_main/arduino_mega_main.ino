@@ -324,7 +324,7 @@ void loop() {
         alarm.stop();
         setWaitStack(&main_loop_stack, []() {
           setStepWheel(int(20358/numTubes) * sampleCounter, []() {
-            sampleCounter += 5;
+            sampleCounter += 1;
             adjustmentServo.write(SERVO_PUSH); 
             setWaitStack(&pre_inject_stack, []() {
               adjustmentServo.write(SERVO_IDLE); 
