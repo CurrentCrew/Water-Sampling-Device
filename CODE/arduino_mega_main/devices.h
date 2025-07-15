@@ -37,6 +37,7 @@ void init_devices()
   alarm.init();
   sensor.init();
   microSwitch.init();
+  
   adjustmentServo.attach(SERVO_PIN);
   adjustmentServo.write(SERVO_IDLE); 
 }

@@ -11,6 +11,7 @@
 #include "states.h"
 #include "actions.h"
 #include "devices.h"
+#include <avr/sleep.h>
 
 struct Vector2 med_button_half_size = {64, 16};
 struct Vector2 med_button_size = {128, 16};
@@ -32,7 +33,9 @@ UIButton inject_needle_button(1, {0, 0}, med_button_half_size);
 UIButton release_needle_button(2, {64, 0}, med_button_half_size);
 UIButton extend_adjustment_button(3, {0, 16}, med_button_half_size);
 UIButton release_adjustment_button(4, {64, 16}, med_button_half_size);
-UIButton manual_control_screen_back(5, {0, 36}, med_button_size);
+UIButton step_forward_button(5, {0, 32}, med_button_half_size);
+UIButton step_backwards_button(6, {64, 32}, med_button_half_size);
+UIButton manual_control_screen_back(7, {0, 48}, med_button_size);
 
 // Prime Screen
 UIScreen prime_screen;
@@ -53,22 +56,31 @@ void updateDisplay()
   current_screen->render(main_display);
 }
 
-void setStepWheel(int steps, void (*_stepWheelEnd)())
+void setStepWheel(int steps, int dir, void (*_stepWheelEnd)())
 {
   state = STEP_WHEEL_STATE;
   stepWheelEnd = _stepWheelEnd;
   wheel_steps = steps;
-  setWaitingText("Stepping", 8);
   rotary.on();
-  rotary.dirCCW();
-  Serial.println("Stepping");
+  if (dir == 1)
+    rotary.dirCCW();
+  else
+    rotary.dirCW();
 }
 
 struct WaitState release_needle_state {
-  10 * SECONDS,
+  1 * SECONDS,
   []() {
     setWaitingText("Releasing Needle", 16);
     verticalActuator.extend();
+  }
+};
+
+struct WaitState insert_needle_state {
+  1 * SECONDS,
+  []() {
+    setWaitingText("Inserting Needle", 16);
+    verticalActuator.retract();
   }
 };
 
@@ -79,14 +91,6 @@ struct WaitState release_needle_state {
 //     horizontalActuator.retract();
 //   }
 // };
-
-struct WaitState insert_needle_state {
-  10 * SECONDS,
-  []() {
-    setWaitingText("Inserting Needle", 16);
-    verticalActuator.retract();
-  }
-};
 
 // struct WaitState extend_lock_state {
 //   4 * SECONDS,
@@ -118,7 +122,7 @@ struct WaitState release_stack_objs[] = {
 
 WaitStack release_stack = {
   release_stack_objs,
-  2
+  1
 };
 
 // Main Loop Start STack
@@ -179,6 +183,13 @@ void setManualState()
   state = MANUAL_CONTROL;
 }
 
+void start_main_loop()
+{
+  setWaitStack(&release_stack, []() {
+    goToLimit(setMainLoopIdle);
+  });
+}
+
 void init_ui()
 {
   // Home screen
@@ -193,11 +204,7 @@ void init_ui()
 
   manual_button.setOnPress(setManualState);
 
-  start_button.setOnPress([]() {
-    setWaitStack(&release_stack, []() {
-      goToLimit(setMainLoopIdle);
-    });
-  });
+  start_button.setOnPress(start_main_loop);
 
 
   home_screen.addElement(&prime_pump_button);
@@ -210,6 +217,8 @@ void init_ui()
   release_needle_button.setText("Release", 7, 1);
   extend_adjustment_button.setText("Adjust", 6, 1);
   release_adjustment_button.setText("Unadjust", 8, 1);
+  step_forward_button.setText("Forward", 7, 1);
+  step_backwards_button.setText("Backwards", 9, 1);
   manual_control_screen_back.setText("Back", 4, 1);
 
   inject_needle_button.setOnPress([]() {
@@ -232,10 +241,24 @@ void init_ui()
     state = IDLE_STATE;
   });
 
+  step_forward_button.setOnPress([]() {
+    setStepWheel(int(stepPerFullRev/numTubes), 1, []() {
+      state = MANUAL_CONTROL;
+    });
+  });
+
+  step_backwards_button.setOnPress([]() {
+    setStepWheel(int(stepPerFullRev/numTubes), -1, []() {
+      state = MANUAL_CONTROL;
+    });
+  });
+
   manual_control_screen.addElement(&inject_needle_button);
   manual_control_screen.addElement(&release_needle_button);
   manual_control_screen.addElement(&extend_adjustment_button);
   manual_control_screen.addElement(&release_adjustment_button);
+  manual_control_screen.addElement(&step_forward_button);
+  manual_control_screen.addElement(&step_backwards_button);
   manual_control_screen.addElement(&manual_control_screen_back);
 
   // Prime Screen
@@ -250,6 +273,8 @@ void init_ui()
 
   // Waiting Screen
   waiting_screen.addElement(&waiting_text);
+
+  Serial.println("Initialized Interface");
 }
 
 void setup() {
@@ -263,12 +288,10 @@ void setup() {
   init_ui();
 
   current_screen = &home_screen;
-
   updateDisplay();
 
-  // adjustmentServo.write(100); 
-  // delay(1000);
-  // adjustmentServo.write(58); 
+  set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+  sleep_enable();
 }
 
 void loop() {
@@ -318,9 +341,10 @@ void loop() {
       break;
     case MAIN_LOOP_IDLE:
       if(alarm_setoff) {
+        alarm_setoff = false;
         alarm.stop();
         setWaitStack(&main_loop_stack, []() {
-          setStepWheel(int(20358/numTubes) * sampleCounter, []() {
+          setStepWheel(int(stepPerFullRev/numTubes) * sampleCounter, 1, []() {
             sampleCounter += 1;
             adjustmentServo.write(SERVO_PUSH); 
             setWaitStack(&pre_inject_stack, []() {
@@ -348,10 +372,16 @@ void loop() {
         pump.stop();
         setWaitStack(&release_stack, []() {
           goToLimit([]() {
-            if (sampleCounter >= numTubes)
+            setWaitingText("Sleeping", 8);
+            rotary.off();
+            verticalActuator.release();
+            horizontalActuator.release();
+            if (sampleCounter >= numSamples)
               state = IDLE_STATE;
             else
               state = MAIN_LOOP_IDLE;
+
+            // sleep_mode();
           });
         });
       }

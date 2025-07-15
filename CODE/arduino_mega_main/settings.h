@@ -1,10 +1,11 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
-const int stepPerFullRev = 800;
+const int stepPerFullRev = 20358;
 
 const int secsBetweenSamples = 3;
-const int numTubes = 29;
+const int numTubes = 32;
+const int numSamples = 29;
 
 const int fillTubeSteps = 200;
 const int flushSteps = 200;

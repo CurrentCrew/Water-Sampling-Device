@@ -28,6 +28,11 @@ class Actuator {
             digitalWrite(this->act_pin1, LOW);
             digitalWrite(this->act_pin2, HIGH);
         }
+        void release()
+        {
+            digitalWrite(this->act_pin1, LOW);
+            digitalWrite(this->act_pin2, LOW);
+        }
         
 };
 

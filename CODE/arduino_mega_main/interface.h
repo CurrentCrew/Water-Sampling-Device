@@ -133,7 +133,7 @@ class UIButton : public UIText {
     }
 };
 
-#define MAX_ELEMENT_COUNT 5
+#define MAX_ELEMENT_COUNT 10
 class UIScreen {
   public:
     int element_count;
