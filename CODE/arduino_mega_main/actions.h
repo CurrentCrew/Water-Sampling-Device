@@ -57,6 +57,11 @@ void onSelectButton()
   }
 }
 
+void selectPressed()
+{
+  select_pressed = true;
+}
+
 void attachInterrupts()
 {
   pinMode(UP_BUTTON_PIN, INPUT_PULLUP);
@@ -64,6 +69,7 @@ void attachInterrupts()
   pinMode(SELECT_BUTTON_PIN, INPUT_PULLUP);
 
   attachInterrupt(digitalPinToInterrupt(clockPin), onAlarm, FALLING);
+  attachInterrupt(digitalPinToInterrupt(SELECT_BUTTON_PIN), selectPressed, FALLING);
 
   // Interrupts
   // Enable pin change interrupt group 6 (PCIE6)
@@ -72,7 +78,6 @@ void attachInterrupts()
   // Enable PCINT53, PCINT54, PCINT55 in PCMSK6
   PCMSK2 |= (1 << PCINT21);  // Pin 67
   PCMSK2 |= (1 << PCINT22);  // Pin 68
-  PCMSK2 |= (1 << PCINT23);  // Pin 69
 }
 
 ISR(PCINT2_vect) {
@@ -82,9 +87,6 @@ ISR(PCINT2_vect) {
   }
   if (digitalRead(DOWN_BUTTON_PIN) == LOW) {
     down_pressed = true;
-  }
-  if (digitalRead(SELECT_BUTTON_PIN) == LOW) {
-    select_pressed = true;
   }
 }
 

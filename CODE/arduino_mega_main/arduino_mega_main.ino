@@ -11,7 +11,7 @@
 #include "states.h"
 #include "actions.h"
 #include "devices.h"
-#include <avr/sleep.h>
+#include "LowPower.h"
 
 struct Vector2 med_button_half_size = {64, 16};
 struct Vector2 med_button_size = {128, 16};
@@ -61,6 +61,7 @@ void setStepWheel(int steps, int dir, void (*_stepWheelEnd)())
   state = STEP_WHEEL_STATE;
   stepWheelEnd = _stepWheelEnd;
   wheel_steps = steps;
+  setWaitingText("Stepping motor", 14);
   rotary.on();
   if (dir == 1)
     rotary.dirCCW();
@@ -122,7 +123,7 @@ struct WaitState release_stack_objs[] = {
 
 WaitStack release_stack = {
   release_stack_objs,
-  1
+  sizeof(release_stack_objs) / sizeof(struct WaitState)
 };
 
 // Main Loop Start STack
@@ -132,7 +133,7 @@ struct WaitState main_loop_start_stack_objs[] = {
 
 WaitStack main_loop_stack = {
   main_loop_start_stack_objs,
-  5
+  sizeof(main_loop_start_stack_objs) / sizeof(struct WaitState)
 };
 
 // pre_inject_stack
@@ -153,7 +154,7 @@ void setWaitingText(char* text, int text_length)
 
 void goToLimit(void (*_goToLimitEnd)())
 {
-  setWaitingText("Going to limit switch", 21);
+  setWaitingText("Going to \nlimit switch", 22);
   state = GO_TO_LIMIT_STATE;
   rotary.dirCW();
   rotary.on();
@@ -289,9 +290,6 @@ void setup() {
 
   current_screen = &home_screen;
   updateDisplay();
-
-  set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-  sleep_enable();
 }
 
 void loop() {
@@ -381,7 +379,7 @@ void loop() {
             else
               state = MAIN_LOOP_IDLE;
 
-            // sleep_mode();
+            LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
           });
         });
       }
