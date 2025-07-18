@@ -10,7 +10,7 @@ const int numSamples = 29;
 const int fillTubeSteps = 200;
 const int flushSteps = 200;
 
-const int purgeTime = 8000;
+const int purgeTime = 8000; //**CHANGE ONCE TESTED**
 
 int sampleCounter = 1;
 

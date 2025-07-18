@@ -10,14 +10,17 @@ void onAlarm() {
   Serial.println("Daily alarm triggered!");
 }
 
+bool isWaterFlowing() {
+  return digitalRead(sensorPin);
+}
+
 #define BUTTON_DEBOUNCE 300
 
 unsigned long lastUpButtonPress = 0;
 unsigned long lastDownButtonPress = 0;
 unsigned long lastSelectButtonPress = 0;
 
-void onUpButton()
-{
+void onUpButton() {
   Serial.println("Up button pressed");
   up_pressed = false;
   if (time_since(millis(), lastUpButtonPress) > BUTTON_DEBOUNCE)
@@ -28,47 +31,36 @@ void onUpButton()
   }
 }
 
-void onDownButton()
-{
+void onDownButton() {
   Serial.println("Down button pressed");
   down_pressed = false;
-  if (time_since(millis(), lastDownButtonPress) > BUTTON_DEBOUNCE)
-  {
+  if (time_since(millis(), lastDownButtonPress) > BUTTON_DEBOUNCE) {
     current_screen->move(1);
     current_screen->render(main_display);
     lastDownButtonPress = millis();
   }
 }
 
-bool isWaterFlowing()
-{
-  return digitalRead(sensorPin);
-}
-
-void onSelectButton()
-{
+void onSelectButton() {
   Serial.println("Select button pressed");
   select_pressed = false;
-  if (time_since(millis(), lastSelectButtonPress) > BUTTON_DEBOUNCE)
-  {
+  if (time_since(millis(), lastSelectButtonPress) > BUTTON_DEBOUNCE) {
     current_screen->select();
     current_screen->render(main_display);
     lastSelectButtonPress = millis();
   }
 }
 
-void selectPressed()
-{
+void selectPressed() {
   select_pressed = true;
 }
 
-void attachInterrupts()
-{
+void attachInterrupts() {
   pinMode(UP_BUTTON_PIN, INPUT_PULLUP);
   pinMode(DOWN_BUTTON_PIN, INPUT_PULLUP);
   pinMode(SELECT_BUTTON_PIN, INPUT_PULLUP);
 
-  attachInterrupt(digitalPinToInterrupt(clockPin), onAlarm, FALLING);
+  attachInterrupt(digitalPinToInterrupt(clockPin), onAlarm, LOW); // because we want it to wake from sleep
   attachInterrupt(digitalPinToInterrupt(SELECT_BUTTON_PIN), selectPressed, FALLING);
 
   // Interrupts

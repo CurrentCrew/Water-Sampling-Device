@@ -3,7 +3,7 @@
 
 RTC_DS3231 rtc;
 
-const int alarmPin = 2;  // RTC SQW
+const int alarmPin = 18;  // RTC SQW
 volatile bool alarmTriggered = false;
 
 void onAlarm() {

@@ -15,11 +15,9 @@
 
 // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
 // The pins for I2C are defined by the Wire-library. 
-// On an arduino UNO:       A4(SDA), A5(SCL)
 // On an arduino MEGA 2560: 20(SDA), 21(SCL)
-// On an arduino LEONARDO:   2(SDA),  3(SCL), ...
 #define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
-#define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
+#define SCREEN_ADDRESS 0x3C // 0x3D for 128x64, 0x3C for 128x32
 Adafruit_SSD1306 main_display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 struct Vector2 {
@@ -34,14 +32,11 @@ class UIElement {
     bool selected;
     bool selectable;
     int index;
-    virtual void render(Adafruit_SSD1306 display)
-    {}
+    virtual void render(Adafruit_SSD1306 display) {}
 
-    virtual void onPress()
-    {}
+    virtual void onPress() {}
 
-    UIElement(int index, struct Vector2 p, struct Vector2 s, bool sel) 
-    {
+    UIElement(int index, struct Vector2 p, struct Vector2 s, bool sel) {
       this->index = index;
       this->size = s;
       this->pos = p;
@@ -49,16 +44,14 @@ class UIElement {
       this->selected = false;
     }
     
-    struct Vector2 getCenter() 
-    {
+    struct Vector2 getCenter() {
       return {
         this->pos.x + this->size.x / 2,
         this->pos.y + this->size.y / 2
       };
     }
 
-    drawOutline(Adafruit_SSD1306 display, int thickness)
-    {
+    drawOutline(Adafruit_SSD1306 display, int thickness) {
       for (int i = 0; i < thickness; i++)
         display.drawRect(this->pos.x+i, this->pos.y+i, this->size.x-i*2, this->size.y-i*2, SSD1306_WHITE);
     }
@@ -70,20 +63,15 @@ class UIText : public UIElement {
     int char_count;
     int text_scale;
 
-    void setText(char * text, int char_count, int text_scale)
-    {
+    void setText(char * text, int char_count, int text_scale) {
       this->text = text;
       this->char_count = char_count;
       this->text_scale = text_scale;
     }
 
-    UIText(int index, struct Vector2 s, struct Vector2 p) : UIElement(index, s, p, false)
-    {
+    UIText(int index, struct Vector2 s, struct Vector2 p) : UIElement(index, s, p, false) {}
 
-    }
-
-    void render(Adafruit_SSD1306 display) override
-    {
+    void render(Adafruit_SSD1306 display) override {
       UIElement::render(display);
 
       Vector2 center = this->getCenter();
@@ -103,26 +91,22 @@ class UIButton : public UIText {
     void (*onPressFunction)();
     bool on_press_sent;
 
-    UIButton(int index, struct Vector2 s, struct Vector2 p) : UIText(index, s, p)
-    {
+    UIButton(int index, struct Vector2 s, struct Vector2 p) : UIText(index, s, p) {
       this->selectable = true;
       this->onPressFunction = &emptyFunction;
     }
 
-    void setOnPress(void (*onPressFunction)())
-    {
+    void setOnPress(void (*onPressFunction)()) {
       this->onPressFunction = onPressFunction;
       this->on_press_sent = true;
     }
 
-    void onPress() override
-    {
+    void onPress() override {
       if (this->on_press_sent)
         this->onPressFunction();
     }
 
-    void render(Adafruit_SSD1306 display) override
-    {
+    void render(Adafruit_SSD1306 display) override {
 
       UIText::render(display);
 

@@ -20,7 +20,7 @@ class Alarm {
             // Set up the interrupt pin (SQW → Arduino D18)
             pinMode(this->alarmPin, INPUT_PULLUP);
             
-            //CLOCK SETUP CODE
+            // CLOCK SETUP CODE
             // Initialize the RTC
             if (!rtc.begin()) {
                 Serial.println("Couldn't find RTC!");

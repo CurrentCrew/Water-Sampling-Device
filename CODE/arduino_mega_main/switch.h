@@ -1,7 +1,7 @@
 #ifndef SWITCH_H
 #define SWITCH_H
 
-class Switch { //Active 
+class Switch { // Active 
     public:
         int no_pin;
         int switchState;
