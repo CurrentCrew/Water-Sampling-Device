@@ -23,6 +23,6 @@ const int UP_BUTTON_PIN = 67;
 const int DOWN_BUTTON_PIN = 68;
 const int SELECT_BUTTON_PIN = 3;
 
-const int SERVO_PIN = 5;
+const int SERVO_PIN = 12;
 
 #endif

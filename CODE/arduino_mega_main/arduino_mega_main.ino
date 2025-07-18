@@ -35,7 +35,8 @@ UIButton extend_adjustment_button(3, {0, 16}, med_button_half_size);
 UIButton release_adjustment_button(4, {64, 16}, med_button_half_size);
 UIButton step_forward_button(5, {0, 32}, med_button_half_size);
 UIButton step_backwards_button(6, {64, 32}, med_button_half_size);
-UIButton manual_control_screen_back(7, {0, 48}, med_button_size);
+UIButton go_to_limit_button(7, {0, 48}, med_button_half_size);
+UIButton manual_control_screen_back(8, {64, 48}, med_button_half_size);
 
 // Prime Screen
 UIScreen prime_screen;
@@ -70,7 +71,7 @@ void setStepWheel(int steps, int dir, void (*_stepWheelEnd)())
 }
 
 struct WaitState release_needle_state {
-  1 * SECONDS,
+  12 * SECONDS,
   []() {
     setWaitingText("Releasing Needle", 16);
     verticalActuator.extend();
@@ -78,7 +79,7 @@ struct WaitState release_needle_state {
 };
 
 struct WaitState insert_needle_state {
-  1 * SECONDS,
+  12 * SECONDS,
   []() {
     setWaitingText("Inserting Needle", 16);
     verticalActuator.retract();
@@ -143,7 +144,7 @@ struct WaitState pre_inject_stack_objs[] = {
 
 WaitStack pre_inject_stack = {
   main_loop_start_stack_objs,
-  2
+  1
 };
 
 void setWaitingText(char* text, int text_length)
@@ -220,6 +221,7 @@ void init_ui()
   release_adjustment_button.setText("Unadjust", 8, 1);
   step_forward_button.setText("Forward", 7, 1);
   step_backwards_button.setText("Backwards", 9, 1);
+  go_to_limit_button.setText("To Limit", 8, 1);
   manual_control_screen_back.setText("Back", 4, 1);
 
   inject_needle_button.setOnPress([]() {
@@ -238,18 +240,27 @@ void init_ui()
     adjustmentServo.write(SERVO_IDLE); 
   });
 
+  go_to_limit_button.setOnPress([]() {
+    goToLimit([]() {
+      state = MANUAL_CONTROL;
+      rotary.off();
+    });
+  });
+
   manual_control_screen_back.setOnPress([]() {
     state = IDLE_STATE;
   });
 
   step_forward_button.setOnPress([]() {
-    setStepWheel(int(stepPerFullRev/numTubes), 1, []() {
+    setStepWheel(int(stepPerFullRev/numTubes) * 4 + 200, 1, []() {
+      rotary.off();; // dont know why it needs two
       state = MANUAL_CONTROL;
     });
   });
 
   step_backwards_button.setOnPress([]() {
     setStepWheel(int(stepPerFullRev/numTubes), -1, []() {
+      rotary.off();;
       state = MANUAL_CONTROL;
     });
   });
@@ -260,6 +271,7 @@ void init_ui()
   manual_control_screen.addElement(&release_adjustment_button);
   manual_control_screen.addElement(&step_forward_button);
   manual_control_screen.addElement(&step_backwards_button);
+  manual_control_screen.addElement(&go_to_limit_button);
   manual_control_screen.addElement(&manual_control_screen_back);
 
   // Prime Screen
@@ -342,7 +354,7 @@ void loop() {
         alarm_setoff = false;
         alarm.stop();
         setWaitStack(&main_loop_stack, []() {
-          setStepWheel(int(stepPerFullRev/numTubes) * sampleCounter, 1, []() {
+          setStepWheel(int(stepPerFullRev/numTubes) * sampleCounter + 190, 1, []() {
             sampleCounter += 1;
             adjustmentServo.write(SERVO_PUSH); 
             setWaitStack(&pre_inject_stack, []() {
@@ -379,7 +391,12 @@ void loop() {
             else
               state = MAIN_LOOP_IDLE;
 
-            LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
+            // Temp
+            delay(10*1000);
+
+            alarm_setoff = true;
+
+            // LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
           });
         });
       }

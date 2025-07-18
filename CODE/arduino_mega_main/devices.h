@@ -23,7 +23,7 @@ Switch microSwitch(switchPin);
 Servo adjustmentServo;
 
 const int SERVO_IDLE = 100;
-const int SERVO_PUSH = 58;
+const int SERVO_PUSH = 100; //58;
 
 
 void init_devices()
