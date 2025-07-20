@@ -7,7 +7,7 @@
 void onAlarm() {
   alarm_setoff = true;
   // Clear the alarm flag to allow the next day’s event
-  Serial.println("Daily alarm triggered!");
+  // Serial.println("Daily alarm triggered!");
 }
 
 bool isWaterFlowing() {
@@ -60,26 +60,7 @@ void attachInterrupts() {
   pinMode(DOWN_BUTTON_PIN, INPUT_PULLUP);
   pinMode(SELECT_BUTTON_PIN, INPUT_PULLUP);
 
-  attachInterrupt(digitalPinToInterrupt(clockPin), onAlarm, LOW); // because we want it to wake from sleep
-  attachInterrupt(digitalPinToInterrupt(SELECT_BUTTON_PIN), selectPressed, FALLING);
-
-  // Interrupts
-  // Enable pin change interrupt group 6 (PCIE6)
-  PCICR |= (1 << PCIE2);
-
-  // Enable PCINT53, PCINT54, PCINT55 in PCMSK6
-  PCMSK2 |= (1 << PCINT21);  // Pin 67
-  PCMSK2 |= (1 << PCINT22);  // Pin 68
-}
-
-ISR(PCINT2_vect) {
-  // Check which pin triggered it
-  if (digitalRead(UP_BUTTON_PIN) == LOW) {
-    up_pressed = true;
-  }
-  if (digitalRead(DOWN_BUTTON_PIN) == LOW) {
-    down_pressed = true;
-  }
+  attachInterrupt(digitalPinToInterrupt(clockPin), onAlarm, FALLING); // because we want it to wake from sleep
 }
 
 #endif

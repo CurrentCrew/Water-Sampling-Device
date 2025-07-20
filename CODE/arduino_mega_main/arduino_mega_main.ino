@@ -8,6 +8,8 @@
 
 #define TEST_MODE
 
+#define SETUP_2
+
 #include "states.h"
 #include "actions.h"
 #include "devices.h"
@@ -304,14 +306,28 @@ void setup() {
   updateDisplay();
 }
 
+unsigned long last_shout;
+
 void loop() {
-  if (up_pressed)
+
+  if (time_since(millis(), last_shout) > 1000)
+  {
+    last_shout = millis();
+    Serial.print("state: ");
+    Serial.println(state);
+
+    Serial.println(digitalRead(UP_BUTTON_PIN));
+    Serial.println(digitalRead(DOWN_BUTTON_PIN));
+    Serial.println(digitalRead(SELECT_BUTTON_PIN));
+  }
+
+  if (!digitalRead(UP_BUTTON_PIN))
     onUpButton();
 
-  if (down_pressed)
+  if (!digitalRead(DOWN_BUTTON_PIN))
     onDownButton();
 
-  if (select_pressed)
+  if (!digitalRead(SELECT_BUTTON_PIN))
     onSelectButton();
 
   if (current_screen != state_screens[state])
@@ -351,8 +367,6 @@ void loop() {
       break;
     case MAIN_LOOP_IDLE:
       if(alarm_setoff) {
-        alarm_setoff = false;
-        alarm.stop();
         setWaitStack(&main_loop_stack, []() {
           setStepWheel(int(stepPerFullRev/numTubes) * sampleCounter + 190, 1, []() {
             sampleCounter += 1;
@@ -385,18 +399,21 @@ void loop() {
             setWaitingText("Sleeping", 8);
             rotary.off();
             verticalActuator.release();
-            horizontalActuator.release();
             if (sampleCounter >= numSamples)
               state = IDLE_STATE;
             else
               state = MAIN_LOOP_IDLE;
 
-            // Temp
-            delay(10*1000);
+            alarm_setoff = false;
+            alarm.stop();
 
-            alarm_setoff = true;
-
-            // LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
+            while (!alarm_setoff)
+            {
+              LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
+              Serial.println("Wokeup");
+              delay(100);
+            }
+              
           });
         });
       }
@@ -405,6 +422,6 @@ void loop() {
       break;
   }
   
-
+  delay(1);
 }
 
