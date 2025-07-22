@@ -13,7 +13,7 @@
 #include <Servo.h>
 
 // Constructor initializations
-Rotary rotary(wheelStepPin, wheelDirPin, wheelEnPin);
+Rotary rotary(wheelStepPin, wheelDirPin, wheelEnPin, invertRotary);
 Actuator verticalActuator(needleActuatorpin1, needleActuatorpin2);
 Pump pump(pumpEnPin);
 Alarm alarm(clockPin);

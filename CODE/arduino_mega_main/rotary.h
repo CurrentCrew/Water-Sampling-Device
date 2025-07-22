@@ -7,12 +7,14 @@ class Rotary {
     int stp_pin;
     int dir_pin;
     int ena_pin;
+    int inversion;
 
     // Constructors
-    Rotary(const int stp_pin, const int dir_pin, const int ena_pin) {
+    Rotary(const int stp_pin, const int dir_pin, const int ena_pin, int inversion) {
         this->stp_pin = stp_pin;
         this->dir_pin = dir_pin;
         this->ena_pin = ena_pin;
+        this->inversion = inversion;
 
         this->step_position = 0;
     }
@@ -35,10 +37,16 @@ class Rotary {
       digitalWrite(this->ena_pin, HIGH);
     }
     void dirCCW() {
-      digitalWrite(this->dir_pin, HIGH);
+      if (this->inversion == 0)
+        digitalWrite(this->dir_pin, HIGH);
+      else
+        digitalWrite(this->dir_pin, LOW);
     }
     void dirCW() {
-      digitalWrite(this->dir_pin, LOW);
+      if (this->inversion == 0)
+        digitalWrite(this->dir_pin, LOW);
+      else
+        digitalWrite(this->dir_pin, HIGH);
     }
 
     // 250 steps/sec
