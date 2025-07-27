@@ -10,8 +10,8 @@ const int SERVO_PIN = 12;
 const int sensorEnablePin = 4;
 const int sensorPin = 7;
 
-const int needleActuatorpin1 = 27;
-const int needleActuatorpin2 = 26;
+const int needleActuatorpin1 = 27; //25
+const int needleActuatorpin2 = 26; //24
 
 const int wheelStepPin = 42;
 const int wheelDirPin = 41;
@@ -25,18 +25,18 @@ const int pumpEnPin = 30;
 
 const int switchPin = 6;
 
-const int invertRotary = 0;
-const int STEP_OFFSET = 200;
+const int invertRotary = 1;
+const int STEP_OFFSET = 100;
 
 #endif
 
 #ifdef SETUP_2
 
-const int sensorEnablePin = 2;
-const int sensorPin = 4;
+const int sensorEnablePin = 4;
+const int sensorPin = 3;
 
-const int needleActuatorpin1 = 26;
-const int needleActuatorpin2 = 27;
+const int needleActuatorpin1 = 25;
+const int needleActuatorpin2 = 24;
 
 const int wheelStepPin = 43;
 const int wheelDirPin = 40;
@@ -50,8 +50,8 @@ const int pumpEnPin = 36;
 
 const int switchPin = 2;
 
-const int invertRotary = 1;
-const int STEP_OFFSET = 0;
+const int invertRotary = 0;
+const int STEP_OFFSET = 100;
 
 #endif
 

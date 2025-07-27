@@ -24,7 +24,7 @@ class Alarm {
             // Initialize the RTC
             if (!rtc.begin()) {
                 Serial.println("Couldn't find RTC!");
-                while (1) delay(10);
+                // while (1) delay(10);
             }
             // If power was lost, set time to compile time
             if (rtc.lostPower()) {

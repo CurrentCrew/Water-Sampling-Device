@@ -8,13 +8,21 @@
 
 #define TEST_MODE
 
-#define SETUP_2
+#define SETUP_1
 
+// Libraries
+#include "LowPower.h"
+#include <EEPROM.h>
+
+// Custom Libraries
 #include "states.h"
 #include "actions.h"
 #include "devices.h"
-#include "LowPower.h"
 #include "ui.h"
+
+// EEProm Table of Contents
+// int STEP_OFFSET
+// int 
 
 void setStepWheel(int steps, int dir, void (*_stepWheelEnd)())
 {
@@ -150,14 +158,6 @@ void init_ui()
     setWaitState(&release_needle_state, setManualState);
   });
 
-  extend_adjustment_button.setOnPress([]() {
-    adjustmentServo.write(SERVO_PUSH); 
-  });
-
-  release_adjustment_button.setOnPress([]() {
-    adjustmentServo.write(SERVO_IDLE); 
-  });
-
   go_to_limit_button.setOnPress([]() {
     goToLimit([]() {
       state = MANUAL_CONTROL;
@@ -203,21 +203,31 @@ void setup() {
 
   current_screen = &home_screen;
   updateDisplay();
+
+  pinMode(wheelDirPin, OUTPUT);
+  digitalWrite(wheelDirPin, HIGH);
+  
+  // while(true)
+  // {
+  //   digitalWrite(wheelDirPin, HIGH);
+  //   delay(1000);
+  //   digitalWrite(wheelDirPin, LOW);
+  //   delay(1000);
+  // }
+
 }
 
 unsigned long last_shout;
 
 void loop() {
 
-  if (time_since(millis(), last_shout) > 1000)
+  if (time_since(millis(), last_shout) > 300)
   {
     last_shout = millis();
-    Serial.print("state: ");
-    Serial.println(state);
+    // Serial.print("state: ");
+    // Serial.println(state);
 
-    Serial.println(digitalRead(UP_BUTTON_PIN));
-    Serial.println(digitalRead(DOWN_BUTTON_PIN));
-    Serial.println(digitalRead(SELECT_BUTTON_PIN));
+    Serial.println(digitalRead(sensorPin));
   }
 
   if (!digitalRead(UP_BUTTON_PIN))

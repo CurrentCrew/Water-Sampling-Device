@@ -16,17 +16,22 @@ struct Vector2 prime_pump_button_pos = {0, 0};
 UIButton prime_pump_button(1, {0, 0}, med_button_size);
 UIButton start_button(2, {0, 16}, med_button_size);
 UIButton manual_button(3, {0, 32}, med_button_size);
+UIButton settings_button(3, {0, 48}, med_button_size);
+
+// Settings Screen
+UIScreen settings_screen;
+UIButton purge_time_button(1, {0, 0}, med_button_size);
+UIButton account_steps_button(2, {0, 16}, med_button_size);
+UIButton samples_taken_button(2, {0, 16}, med_button_size);
 
 // Manual Control Screen
 UIScreen manual_control_screen;
 UIButton inject_needle_button(1, {0, 0}, med_button_half_size);
 UIButton release_needle_button(2, {64, 0}, med_button_half_size);
-UIButton extend_adjustment_button(3, {0, 16}, med_button_half_size);
-UIButton release_adjustment_button(4, {64, 16}, med_button_half_size);
-UIButton step_forward_button(5, {0, 32}, med_button_half_size);
-UIButton step_backwards_button(6, {64, 32}, med_button_half_size);
-UIButton go_to_limit_button(7, {0, 48}, med_button_half_size);
-UIButton manual_control_screen_back(8, {64, 48}, med_button_half_size);
+UIButton step_forward_button(5, {0, 16}, med_button_half_size);
+UIButton step_backwards_button(6, {64, 16}, med_button_half_size);
+UIButton go_to_limit_button(7, {0, 32}, med_button_half_size);
+UIButton manual_control_screen_back(8, {64, 32}, med_button_half_size);
 
 // Prime Screen
 UIScreen prime_screen;
@@ -68,8 +73,6 @@ void initUI()
 
   inject_needle_button.setText("Inject", 6, 1);
   release_needle_button.setText("Release", 7, 1);
-  extend_adjustment_button.setText("Adjust", 6, 1);
-  release_adjustment_button.setText("Unadjust", 8, 1);
   step_forward_button.setText("Forward", 7, 1);
   step_backwards_button.setText("Backwards", 9, 1);
   go_to_limit_button.setText("To Limit", 8, 1);
@@ -77,8 +80,6 @@ void initUI()
 
   manual_control_screen.addElement(&inject_needle_button);
   manual_control_screen.addElement(&release_needle_button);
-  manual_control_screen.addElement(&extend_adjustment_button);
-  manual_control_screen.addElement(&release_adjustment_button);
   manual_control_screen.addElement(&step_forward_button);
   manual_control_screen.addElement(&step_backwards_button);
   manual_control_screen.addElement(&go_to_limit_button);
@@ -91,8 +92,6 @@ void initUI()
 
   // Waiting Screen
   waiting_screen.addElement(&waiting_text);
-
-  Serial.println("Initialized Interface");
 }
 
 #endif
